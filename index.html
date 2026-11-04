@@ -1,27 +1,712 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="1;url=https://www.crazygames.com/t/obby">
-  <meta name="theme-color" content="#10101b">
-  <title>Opening Obby Games</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: #10101b; color: #fff; font-family: Arial, sans-serif; text-align: center; }
-    main { max-width: 420px; }
-    h1 { font-size: 28px; }
-    p { color: #c9c9db; line-height: 1.6; }
-    a { display: inline-block; margin-top: 12px; padding: 15px 26px; border-radius: 12px; background: #7048eb; color: #fff; text-decoration: none; font-weight: bold; }
-    a:focus-visible { outline: 3px solid #ffd54f; outline-offset: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧱 OBBY PARKOUR – 2D adventure</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #1a1e2c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 8px;
+            touch-action: pan-y pinch-zoom;
+        }
+        .game-wrapper {
+            background: #0b0d14;
+            border-radius: 28px;
+            padding: 16px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.6);
+            max-width: 1100px;
+            width: 100%;
+        }
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            background: #0b0d14;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px #00000055;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            background: #a7d0e0; /* sky */
+            border-radius: 16px;
+            image-rendering: crisp-edges;
+            touch-action: none;
+        }
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 4px 4px 4px;
+            color: #f0f3fa;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #0a0c10;
+            flex-wrap: wrap;
+        }
+        .death-counter {
+            background: #2a2f44;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            border: 2px solid #5d6a8a;
+            box-shadow: 0 4px 0 #0e111b;
+        }
+        .restart-btn {
+            background: #ec8c4b;
+            border: none;
+            color: #1d1f2b;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 8px 28px;
+            border-radius: 40px;
+            box-shadow: 0 5px 0 #9e542b;
+            cursor: pointer;
+            transition: transform 0.05s, box-shadow 0.1s;
+            letter-spacing: 0.5px;
+            border: 2px solid #ffcf9a;
+        }
+        .restart-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #9e542b;
+        }
+        .controls-mobile {
+            display: none;
+            justify-content: space-between;
+            margin-top: 12px;
+            gap: 10px;
+            padding: 4px;
+        }
+        .ctrl-btn {
+            background: #2f3650;
+            border: 4px solid #7988b0;
+            border-radius: 30px;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 0;
+            flex: 1;
+            box-shadow: 0 7px 0 #13172b;
+            transition: all 0.04s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .ctrl-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #13172b;
+            background: #424b6b;
+        }
+        .jump-btn {
+            background: #5e9e5e;
+            border-color: #9adf9a;
+            box-shadow: 0 7px 0 #2c602c;
+        }
+        .jump-btn:active {
+            background: #4d8a4d;
+        }
+
+        /* responsive mobile landscape */
+        @media (max-width: 800px), (max-height: 500px) {
+            .game-wrapper { padding: 8px; }
+            .hud { margin: 6px 2px; }
+            .death-counter { font-size: 1rem; padding: 6px 16px; }
+            .restart-btn { font-size: 1rem; padding: 6px 20px; }
+            .ctrl-btn { font-size: 1.8rem; padding: 10px 0; }
+        }
+        @media (orientation: portrait) and (min-width: 600px) {
+            .controls-mobile { display: flex; }
+        }
+        /* always show mobile controls if touch device, but we decide by JS too */
+        .show-mobile-controls .controls-mobile {
+            display: flex;
+        }
+        .hide-mobile-controls .controls-mobile {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-  <main>
-    <h1>Obby Games</h1>
-    <p>Opening CrazyGames in this tab…<br>If it does not open automatically, press the button below.</p>
-    <a href="https://www.crazygames.com/t/obby">Open Obby Games</a>
-  </main>
-  <script>window.location.replace('https://www.crazygames.com/t/obby');</script>
+<div class="game-wrapper" id="gameWrapper">
+    <div class="hud">
+        <div class="death-counter">💀 <span id="deathDisplay">0</span></div>
+        <button class="restart-btn" id="restartButton">↻ RESTART</button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="gameCanvas" width="960" height="540"></canvas>
+    </div>
+    <!-- Mobile controls: Left, Right, Jump -->
+    <div class="controls-mobile" id="mobileControls">
+        <button class="ctrl-btn" id="leftBtn" aria-label="Move left">◀</button>
+        <button class="ctrl-btn jump-btn" id="jumpBtn" aria-label="Jump">⬆️</button>
+        <button class="ctrl-btn" id="rightBtn" aria-label="Move right">▶</button>
+    </div>
+</div>
+<script>
+    (function(){
+        // ---------- CANVAS ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const deathSpan = document.getElementById('deathDisplay');
+        const restartBtn = document.getElementById('restartButton');
+        const gameWrapper = document.getElementById('gameWrapper');
+
+        // fixed world dimensions (canvas resolution)
+        const W = 960, H = 540;
+
+        // ---------- GAME STATE ----------
+        let gameState = 'START';  // 'START', 'PLAYING', 'WIN'
+        let deaths = 0;
+        let checkpoint = { x: 80, y: 390 };  // default respawn (updated by checkpoint flag)
+
+        // Player definition
+        const player = {
+            x: 80, y: 380,
+            w: 28, h: 36,
+            vx: 0, vy: 0,
+            onGround: false,
+            facing: 1
+        };
+
+        // Physics constants
+        const GRAVITY = 0.55;
+        const JUMP_FORCE = -11;
+        const MOVE_SPEED = 4.6;
+        const FRICTION = 0.75;
+        const MAX_FALL = 14;
+
+        // Platforms: solid blocks (x, y, width, height, color)
+        // Lava: hazard rectangles (x, y, width, height)
+        const platforms = [
+            // starting ground
+            { x: 0, y: 480, w: 200, h: 60, color: '#6b8c42' },
+            // gap 1 - jump to next
+            { x: 260, y: 460, w: 130, h: 80, color: '#7aa84f' },
+            // gap 2 - stepping stone
+            { x: 440, y: 430, w: 90, h: 60, color: '#5e8c3a' },
+            // checkpoint platform (with flag)
+            { x: 580, y: 400, w: 110, h: 90, color: '#6b8c42' },
+            // gap 3 - platform up
+            { x: 740, y: 360, w: 100, h: 60, color: '#7aa84f' },
+            // final high platform with finish
+            { x: 840, y: 300, w: 120, h: 60, color: '#8fbc5a' },
+            // extra small ledge before finish
+            { x: 760, y: 270, w: 50, h: 30, color: '#5e8c3a' }
+        ];
+
+        // Lava zones: dangerous red areas
+        const lavas = [
+            { x: 200, y: 520, w: 60, h: 30 },   // under gap 1
+            { x: 390, y: 500, w: 50, h: 40 },   // under gap 2
+            { x: 690, y: 480, w: 50, h: 60 },   // under gap 3
+            { x: 0, y: 530, w: 960, h: 10 },    // bottom death line (extra)
+            { x: 200, y: 540, w: 760, h: 40 }   // deep lava pit
+        ];
+
+        // Checkpoint flag & finish flag
+        const checkpointFlag = { x: 610, y: 320, w: 20, h: 80, active: false };
+        const finishFlag = { x: 880, y: 210, w: 20, h: 90, finished: false };
+
+        // ---------- INPUT HANDLING ----------
+        const keys = {
+            left: false,
+            right: false,
+            jump: false,
+            jumpPressed: false
+        };
+
+        // Mobile touch state
+        const touchState = {
+            left: false,
+            right: false,
+            jump: false
+        };
+
+        // Helper: is any jump key active?
+        function jumpHeld() {
+            return keys.jump || touchState.jump;
+        }
+
+        // ---------- SHARED JUMP EDGE TRIGGER ----------
+        let jumpWasHeldLastFrame = false;
+
+        // ---------- RESET / RESPAWN ----------
+        function respawnPlayer() {
+            // set player position to checkpoint, cancel velocity
+            player.x = checkpoint.x;
+            player.y = checkpoint.y;
+            player.vx = 0;
+            player.vy = 0;
+            player.onGround = false;
+            // reset any transient input (avoid stuck jump)
+            keys.jump = false;
+            touchState.jump = false;
+            jumpWasHeldLastFrame = false;
+        }
+
+        // ---------- DEATH HANDLER ----------
+        function die() {
+            deaths++;
+            deathSpan.textContent = deaths;
+            respawnPlayer();
+        }
+
+        // ---------- RESTART FULLY ----------
+        function restartGame() {
+            // reset deaths only on manual restart
+            deaths = 0;
+            deathSpan.textContent = deaths;
+            // reset checkpoint to start
+            checkpoint = { x: 80, y: 380 };
+            checkpointFlag.active = false;
+            finishFlag.finished = false;
+            // reset player
+            player.x = 80;
+            player.y = 380;
+            player.vx = 0;
+            player.vy = 0;
+            player.onGround = false;
+            // reset game state to START (show start screen)
+            gameState = 'START';
+            // reset any pressed keys
+            keys.left = keys.right = keys.jump = false;
+            touchState.left = touchState.right = touchState.jump = false;
+            jumpWasHeldLastFrame = false;
+        }
+
+        // ---------- UPDATE PLAYER PHYSICS & COLLISIONS ----------
+        function updatePlayer() {
+            if (gameState !== 'PLAYING') return;
+
+            // Horizontal input
+            const leftPressed = keys.left || touchState.left;
+            const rightPressed = keys.right || touchState.right;
+            let move = 0;
+            if (leftPressed) move -= 1;
+            if (rightPressed) move += 1;
+
+            if (move !== 0) {
+                player.vx = move * MOVE_SPEED;
+                player.facing = move;
+            } else {
+                // friction / stop
+                player.vx *= FRICTION;
+                if (Math.abs(player.vx) < 0.2) player.vx = 0;
+            }
+
+            // Jump handling (edge detection)
+            const jumpNow = jumpHeld();
+            if (jumpNow && !jumpWasHeldLastFrame && player.onGround) {
+                player.vy = JUMP_FORCE;
+                player.onGround = false;
+            }
+            jumpWasHeldLastFrame = jumpNow;
+
+            // Gravity
+            player.vy += GRAVITY;
+            if (player.vy > MAX_FALL) player.vy = MAX_FALL;
+
+            // --- Horizontal movement & collision (X axis) ---
+            player.x += player.vx;
+            // canvas boundaries (hard clamp)
+            if (player.x < 0) { player.x = 0; player.vx = 0; }
+            if (player.x + player.w > W) { player.x = W - player.w; player.vx = 0; }
+
+            // platform collisions on X (push out)
+            for (let pl of platforms) {
+                if (player.x + player.w > pl.x && player.x < pl.x + pl.w &&
+                    player.y + player.h > pl.y && player.y < pl.y + pl.h) {
+                    // overlap: resolve x
+                    if (player.vx > 0) { // moving right
+                        player.x = pl.x - player.w;
+                    } else if (player.vx < 0) { // moving left
+                        player.x = pl.x + pl.w;
+                    }
+                    player.vx = 0;
+                }
+            }
+
+            // --- Vertical movement & collision (Y axis) ---
+            player.y += player.vy;
+            player.onGround = false;
+
+            // platform collisions on Y
+            for (let pl of platforms) {
+                if (player.x + player.w > pl.x && player.x < pl.x + pl.w &&
+                    player.y + player.h > pl.y && player.y < pl.y + pl.h) {
+                    
+                    if (player.vy >= 0) { // falling down – land on top
+                        player.y = pl.y - player.h;
+                        player.vy = 0;
+                        player.onGround = true;
+                    } else if (player.vy < 0) { // moving up – hit head
+                        player.y = pl.y + pl.h;
+                        player.vy = 0;
+                    }
+                }
+            }
+
+            // clamp bottom (avoid infinite fall)
+            if (player.y + player.h > H + 40) {
+                // fell off world -> die
+                die();
+                return;
+            }
+
+            // --- LAVA collision ---
+            for (let lv of lavas) {
+                if (player.x + player.w > lv.x && player.x < lv.x + lv.w &&
+                    player.y + player.h > lv.y && player.y < lv.y + lv.h) {
+                    die();
+                    return;
+                }
+            }
+
+            // --- CHECKPOINT FLAG collision ---
+            if (!checkpointFlag.active) {
+                if (player.x + player.w > checkpointFlag.x && player.x < checkpointFlag.x + checkpointFlag.w &&
+                    player.y + player.h > checkpointFlag.y && player.y < checkpointFlag.y + checkpointFlag.h) {
+                    // activate checkpoint
+                    checkpointFlag.active = true;
+                    // set checkpoint respawn to safe spot on checkpoint platform
+                    checkpoint = { x: 620, y: 360 }; // slightly right on platform
+                }
+            }
+
+            // --- FINISH FLAG collision ---
+            if (!finishFlag.finished) {
+                if (player.x + player.w > finishFlag.x && player.x < finishFlag.x + finishFlag.w &&
+                    player.y + player.h > finishFlag.y && player.y < finishFlag.y + finishFlag.h) {
+                    finishFlag.finished = true;
+                    gameState = 'WIN';
+                }
+            }
+        }
+
+        // ---------- DRAWING ----------
+        function drawBackground() {
+            // sky gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, '#9ac9e8');
+            grad.addColorStop(1, '#d4eaf7');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            // clouds
+            ctx.fillStyle = '#ffffffb0';
+            ctx.beginPath();
+            ctx.arc(150, 70, 45, 0, Math.PI*2);
+            ctx.arc(200, 90, 40, 0, Math.PI*2);
+            ctx.arc(100, 110, 40, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(700, 100, 55, 0, Math.PI*2);
+            ctx.arc(780, 80, 45, 0, Math.PI*2);
+            ctx.arc(640, 80, 40, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff70';
+            ctx.beginPath();
+            ctx.arc(400, 180, 50, 0, Math.PI*2);
+            ctx.arc(460, 160, 40, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        function drawPlatforms() {
+            for (let pl of platforms) {
+                // main block
+                ctx.fillStyle = pl.color;
+                ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+                // top highlight
+                ctx.fillStyle = '#ffffff40';
+                ctx.fillRect(pl.x, pl.y, pl.w, 6);
+                // dark outline
+                ctx.strokeStyle = '#3d4a2e';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(pl.x, pl.y, pl.w, pl.h);
+            }
+        }
+
+        function drawLava() {
+            for (let lv of lavas) {
+                ctx.fillStyle = '#e63946';
+                ctx.fillRect(lv.x, lv.y, lv.w, lv.h);
+                // bubbly details
+                ctx.fillStyle = '#ff8c42';
+                for (let i = 0; i < lv.w; i += 18) {
+                    for (let j = 0; j < lv.h; j += 18) {
+                        ctx.beginPath();
+                        ctx.arc(lv.x + i + 9, lv.y + j + 9, 6, 0, Math.PI*2);
+                        ctx.fillStyle = '#ffb347';
+                        ctx.fill();
+                    }
+                }
+                // glow
+                ctx.shadowColor = '#ff4d00';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = '#ff4d00aa';
+                ctx.fillRect(lv.x, lv.y, lv.w, 4);
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+            }
+        }
+
+        function drawPlayer() {
+            const px = player.x, py = player.y, pw = player.w, ph = player.h;
+            // body (block-style)
+            ctx.fillStyle = '#f7d44a';
+            ctx.fillRect(px, py, pw, ph);
+            // head
+            ctx.fillStyle = '#f5b342';
+            ctx.fillRect(px + 2, py - 4, pw - 4, 12);
+            // eyes
+            ctx.fillStyle = '#1e1e1e';
+            ctx.beginPath();
+            ctx.arc(px + 8, py - 1, 3, 0, Math.PI*2);
+            ctx.arc(px + 20, py - 1, 3, 0, Math.PI*2);
+            ctx.fill();
+            // pupils direction
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(px + 8 + player.facing*1.5, py - 2, 1.5, 0, Math.PI*2);
+            ctx.arc(px + 20 + player.facing*1.5, py - 2, 1.5, 0, Math.PI*2);
+            ctx.fill();
+            // body decoration
+            ctx.fillStyle = '#e69e2e';
+            ctx.fillRect(px + 4, py + 12, pw - 8, 6);
+            ctx.fillStyle = '#c47d1a';
+            ctx.fillRect(px + 6, py + 24, 4, 8);
+            ctx.fillRect(px + 18, py + 24, 4, 8);
+        }
+
+        function drawFlags() {
+            // Checkpoint flag
+            ctx.fillStyle = '#b0b0b0';
+            ctx.fillRect(checkpointFlag.x, checkpointFlag.y, 6, 80); // pole
+            ctx.fillStyle = checkpointFlag.active ? '#2ecc71' : '#e0e0e0';
+            ctx.beginPath();
+            ctx.moveTo(checkpointFlag.x + 6, checkpointFlag.y);
+            ctx.lineTo(checkpointFlag.x + 40, checkpointFlag.y + 20);
+            ctx.lineTo(checkpointFlag.x + 6, checkpointFlag.y + 40);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText('⚑', checkpointFlag.x + 10, checkpointFlag.y + 28);
+
+            // Finish flag
+            ctx.fillStyle = '#aaaaaa';
+            ctx.fillRect(finishFlag.x, finishFlag.y, 8, 90);
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.moveTo(finishFlag.x + 8, finishFlag.y);
+            ctx.lineTo(finishFlag.x + 48, finishFlag.y + 22);
+            ctx.lineTo(finishFlag.x + 8, finishFlag.y + 44);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 18px monospace';
+            ctx.fillText('🏁', finishFlag.x + 12, finishFlag.y + 32);
+        }
+
+        function drawStartScreen() {
+            ctx.fillStyle = '#000000a0';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#f7e05e';
+            ctx.font = 'bold 58px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#2b2b2b';
+            ctx.shadowBlur = 14;
+            ctx.fillText('OBBY PARKOUR', W/2, 220);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 28px system-ui, sans-serif';
+            ctx.fillText('PRESS SPACE or TAP TO START', W/2, 340);
+            ctx.font = '22px system-ui, sans-serif';
+            ctx.fillStyle = '#dddddd';
+            ctx.fillText('← → / A D  •  SPACE to jump', W/2, 420);
+        }
+
+        function drawWinScreen() {
+            ctx.fillStyle = '#000000b0';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#f1c40f';
+            ctx.font = 'bold 72px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#a67c00';
+            ctx.shadowBlur = 16;
+            ctx.fillText('YOU WIN!', W/2, 280);
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 26px system-ui, sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Deaths: ' + deaths, W/2, 400);
+            ctx.font = '24px system-ui, sans-serif';
+            ctx.fillStyle = '#dddddd';
+            ctx.fillText('press RESTART to play again', W/2, 480);
+        }
+
+        // ---------- RENDER LOOP ----------
+        function render() {
+            drawBackground();
+            drawPlatforms();
+            drawLava();
+            drawFlags();
+            drawPlayer();
+
+            if (gameState === 'START') {
+                drawStartScreen();
+            } else if (gameState === 'WIN') {
+                drawWinScreen();
+            }
+
+            // HUD death counter is outside canvas
+        }
+
+        // ---------- GAME LOOP ----------
+        function gameLoop() {
+            updatePlayer();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ---------- START GAME (from Start screen) ----------
+        function startGameIfNeeded() {
+            if (gameState === 'START') {
+                gameState = 'PLAYING';
+                // reset player position to start
+                player.x = 80; player.y = 380;
+                player.vx = 0; player.vy = 0;
+                // ensure checkpoint stays
+            }
+        }
+
+        // ---------- EVENT LISTENERS ----------
+        function setupInput() {
+            // Keyboard
+            window.addEventListener('keydown', (e) => {
+                const key = e.key;
+                // prevent scrolling and default behavior for game keys
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'a', 'A', 'd', 'D', 'w', 'W'].includes(key)) {
+                    e.preventDefault();
+                }
+                if (key === 'ArrowLeft' || key === 'a' || key === 'A') keys.left = true;
+                if (key === 'ArrowRight' || key === 'd' || key === 'D') keys.right = true;
+                if (key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') {
+                    keys.jump = true;
+                    if (gameState === 'START') startGameIfNeeded();
+                }
+                // start with any key
+                if (gameState === 'START' && (key === ' ' || key === 'Enter')) {
+                    startGameIfNeeded();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                const key = e.key;
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'a', 'A', 'd', 'D', 'w', 'W'].includes(key)) {
+                    e.preventDefault();
+                }
+                if (key === 'ArrowLeft' || key === 'a' || key === 'A') keys.left = false;
+                if (key === 'ArrowRight' || key === 'd' || key === 'D') keys.right = false;
+                if (key === ' ' || key === 'Space' || key === 'ArrowUp' || key === 'w' || key === 'W') keys.jump = false;
+            });
+
+            // Mobile buttons (touch / mouse)
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            const jumpBtn = document.getElementById('jumpBtn');
+
+            function setTouchLeft(state) { touchState.left = state; }
+            function setTouchRight(state) { touchState.right = state; }
+            function setTouchJump(state) { 
+                touchState.jump = state; 
+                if (state && gameState === 'START') startGameIfNeeded();
+            }
+
+            // left
+            leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setTouchLeft(true); });
+            leftBtn.addEventListener('touchend', (e) => { e.preventDefault(); setTouchLeft(false); });
+            leftBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); setTouchLeft(false); });
+            leftBtn.addEventListener('mousedown', (e) => { e.preventDefault(); setTouchLeft(true); });
+            leftBtn.addEventListener('mouseup', (e) => { e.preventDefault(); setTouchLeft(false); });
+            leftBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setTouchLeft(false); });
+
+            // right
+            rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setTouchRight(true); });
+            rightBtn.addEventListener('touchend', (e) => { e.preventDefault(); setTouchRight(false); });
+            rightBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); setTouchRight(false); });
+            rightBtn.addEventListener('mousedown', (e) => { e.preventDefault(); setTouchRight(true); });
+            rightBtn.addEventListener('mouseup', (e) => { e.preventDefault(); setTouchRight(false); });
+            rightBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setTouchRight(false); });
+
+            // jump
+            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setTouchJump(true); });
+            jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); setTouchJump(false); });
+            jumpBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); setTouchJump(false); });
+            jumpBtn.addEventListener('mousedown', (e) => { e.preventDefault(); setTouchJump(true); });
+            jumpBtn.addEventListener('mouseup', (e) => { e.preventDefault(); setTouchJump(false); });
+            jumpBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setTouchJump(false); });
+
+            // Prevent context menu on canvas & buttons
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            leftBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+            rightBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+            jumpBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            // Start game by clicking canvas on start screen
+            canvas.addEventListener('click', () => {
+                if (gameState === 'START') startGameIfNeeded();
+            });
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState === 'START') startGameIfNeeded();
+            }, { passive: false });
+
+            // Restart button
+            restartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                restartGame();
+            });
+
+            // Mobile controls show/hide based on touch capability
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (isTouchDevice) {
+                gameWrapper.classList.add('show-mobile-controls');
+            } else {
+                gameWrapper.classList.add('hide-mobile-controls');
+            }
+
+            // Also show mobile controls if screen is small (landscape phone) 
+            if (window.innerWidth < 800) {
+                gameWrapper.classList.add('show-mobile-controls');
+                gameWrapper.classList.remove('hide-mobile-controls');
+            }
+        }
+
+        // ---------- INIT ----------
+        function init() {
+            setupInput();
+            // start loop
+            gameLoop();
+        }
+
+        init();
+    })();
+</script>
 </body>
 </html>
